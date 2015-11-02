@@ -65,7 +65,7 @@ char* config_server_url()
 char* get_config_server_url(){
 	char* config_url;
 
-	identify_prod(context->env_type);
+	identify_prod(context->local_ip);
 
 	config_url = config_server_url();
 
