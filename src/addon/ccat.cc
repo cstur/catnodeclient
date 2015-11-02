@@ -242,7 +242,7 @@ void glue_disable(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = prepareIsolate(args, 1);
 
 	isLogging = checkAndGetInteger(isolate, args[0]);
-	printf("%d\n", isLogging);
+	printf("isLogging:%d\n", isLogging);
 
 	args.GetReturnValue().Set(Number::New(isolate,0)); // return 0 as success
 }

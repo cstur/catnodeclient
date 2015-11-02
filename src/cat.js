@@ -27,9 +27,6 @@ Cat.prototype={
 		var _level = appConfig['log_level'] || 1;
 		addon.glue_set_log_level(_level);
 
-		var _enable = appConfig['enable'] || 1;
-		addon.glue_disable(_enable);
-
 		var obj = addon.glue_get_config_url();
 		var url = obj.config;
 
@@ -57,6 +54,11 @@ Cat.prototype={
 	    	}
 	    }
 
+	    if(appConfig['enable'] != undefined){
+	    	addon.glue_disable(appConfig['enable']);
+	    }else{
+	    	addon.glue_disable(1);
+	    }
 	},
 
 	/**
