@@ -1,5 +1,5 @@
 module.exports={
-	'AppDomain':'123',
+	'AppDomain':'sturpc',
 	'timeout': 10,
 	'log_level': 4
 };

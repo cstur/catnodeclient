@@ -46,6 +46,12 @@ struct byte_buf* init_buf() {
 	return buf;
 }
 
+void free_buf(struct byte_buf* buf) {
+	ZFREE(buf->buffer);
+	ZFREE(buf);
+	buf = NULL;
+}
+
 /** detecting whether base is starts with str
 */
 int startsWith(char* base, char* str) {
@@ -112,12 +118,6 @@ void _expand_buf(struct byte_buf* buf) {
 	buf->buffer = ptr;
 }
 
-void free_buf(struct byte_buf* buf) {
-	ZFREE(buf->buffer);
-	ZFREE(buf);
-	buf = NULL;
-}
-
 /*
  * Purpose: Converting an integer to 4 bytes array
  * Argument  IO  Description
@@ -138,33 +138,12 @@ struct message* init_event() {
 	return evt;
 }
 
-struct message* init_message() {
-	message* msg = ZMALLOC(sizeof(struct message));
-	msg->completed = 0;
-	memset(msg->format_time, 0, 24);
-	msg->trans = NULL;
-	msg->trans_parent = NULL;
-	msg->timestamp = zero();
-	msg->type = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
-	msg->name = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
-	msg->status = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
-	msg->data = init_c_string();
-	return msg;
-}
-
 void copy_string(char* to, const char* from, size_t limit) {
 	size_t len = strlen(from);
 	if (len > limit) {
 		to = (char*) ZREALLOC(to, (len + 1) * sizeof(char));
 	}
 	strncpy(to, from, len + 1);
-}
-
-struct c_string* init_c_string() {
-	c_string *str = (c_string*) ZMALLOC(sizeof(c_string));
-	str->block = 1;
-	str->data = (char*) ZMALLOC(BUFFER_SIZE * sizeof(char));
-	return str;
 }
 
 void _expand_c_string(struct c_string *str, int purpose) {
@@ -194,6 +173,13 @@ void cat_c_string(struct c_string *str, const char *data) {
 	}
 
 	strcat(str->data, data);
+}
+
+struct c_string* init_c_string() {
+	c_string *str = (c_string*) ZMALLOC(sizeof(c_string));
+	str->block = 1;
+	str->data = (char*) ZMALLOC(BUFFER_SIZE * sizeof(char));
+	return str;
 }
 
 void free_c_string(struct c_string *str) {
@@ -232,6 +218,20 @@ struct message* init_transaction() {
 void free_transaction(message* msg) {
 	ZFREE(msg->trans);
 	free_message(msg);
+}
+
+struct message* init_message() {
+	message* msg = ZMALLOC(sizeof(struct message));
+	msg->completed = 0;
+	memset(msg->format_time, 0, 24);
+	msg->trans = NULL;
+	msg->trans_parent = NULL;
+	msg->timestamp = zero();
+	msg->type = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
+	msg->name = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
+	msg->status = (char*) ZMALLOC(CHAR_BUFFER_SIZE);
+	msg->data = init_c_string();
+	return msg;
 }
 
 void free_message(message* msg) {
@@ -403,10 +403,12 @@ void *zmalloc(const char *file, int line, int size) {
 		exit(1);
 	}
 
+	LOG(LOG_INFO, "-- Memory[%p] alloc, size:%d", ptr,size);
 	return (ptr);
 }
 
 void zfree(void* ptr) {
+	LOG(LOG_INFO, "-- Memory[%p] free", ptr);
 	free(ptr);
 }
 

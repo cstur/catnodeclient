@@ -40,6 +40,7 @@ void complete_trans(struct message* msg) {
 			/* transaction has flushed but not free
 			 * this is usually root timeout and flush, and this is a sub trans of root
 			 */
+			LOG(LOG_INFO, "-- Transaction[%p] free", msg);
 			free_transaction(msg);
 		}
 
@@ -49,6 +50,7 @@ void complete_trans(struct message* msg) {
 	if (ptr_trans->is_root == 1) { /* message is root transaction */
 
 		if (ptr_trans->count_fork == 0) { /* all its child has completed */
+			LOG(LOG_INFO, "-- Transaction[%p] completed&flush", msg);
 			set_trans_completed(msg);
 			message_flush(msg);
 		}
@@ -56,6 +58,7 @@ void complete_trans(struct message* msg) {
 		/* else: do nothing, just wait for sub transaction complete */
 
 	} else {
+		LOG(LOG_INFO, "-- Transaction[%p] completed&join", msg);
 		set_trans_completed(msg);
 		do_join(msg);
 	}
@@ -84,6 +87,8 @@ void do_join(struct message* msg) {
 void timeout(struct message* msg) {
 	transaction *ptr_trans;
 
+	LOG(LOG_INFO, "-- Transaction[%p] timeout", msg);
+	msg->trans->timeout = 1;
 	if (msg->completed == 1)
 		return; /* message already completed */
 
@@ -97,6 +102,10 @@ void timeout(struct message* msg) {
 	} else {
 		do_join(msg);
 	}
+}
+
+void settimeout(struct message* msg) {
+	msg->trans->has_timeout = 1;
 }
 
 void timeout_tree(struct message* msg){
@@ -122,10 +131,6 @@ void flush_tree(struct message* msg){
 	msg->trans->flush = 1;
 }
 
-void settimeout(struct message* msg) {
-	msg->trans->has_timeout = 1;
-}
-
 void set_trans_completed(struct message* msg) {
 	c_long current;
 
@@ -141,9 +146,11 @@ void set_trans_completed(struct message* msg) {
 }
 
 void message_flush(struct message* msg) {
+	LOG(LOG_INFO, "-- Transaction[%p] is root:%d, timeout:%d", msg, msg->trans->is_root, msg->trans->timeout);
 	do_send(msg);
 	flush_tree(msg);
-	if (msg->trans->is_root && !msg->trans->has_timeout) {
+	if (msg->trans->is_root && msg->trans->timeout!=1) {
+		LOG(LOG_INFO, "-- Transaction[%p] start free", msg);
 		free_trans(msg);
 	}
 }
@@ -185,7 +192,8 @@ void* do_send(void *arg) {
 #endif
 
 	socket_send(buf->buffer, buf->size);
-
+	
+	free_buf(buf);
 	return NULL;
 }
 

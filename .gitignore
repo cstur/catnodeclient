@@ -11,3 +11,4 @@ doc
 .DS_Store
 npm-debug.log
 mark.txt
+app.config.js
